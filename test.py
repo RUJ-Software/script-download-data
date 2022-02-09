@@ -1,14 +1,20 @@
 from urllib.request import urlopen
 import xml.etree.ElementTree as ET
+from scraper import Scraper as sc
+from sparkStreaming import SparkStreaming
 
 links = []
 counter = 0
+url = "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3.atom"
+counter = 0
+prev_url = ""
+
+ss = SparkStreaming()
 
 
-def searchEntries(url):
+while url != None:
     url_response = urlopen(url) # return a http.response object
-    new_link = ""
-    global counter
+    counter
 
     tree = ET.parse(url_response)
     root = tree.getroot()
@@ -17,19 +23,21 @@ def searchEntries(url):
 
     for element in root:
         if element.tag == entry_tag:
-            #links.append(element.find('{http://www.w3.org/2005/Atom}link').attrib['href'])
-            pass
+            new_link = element.find('{http://www.w3.org/2005/Atom}link').attrib['href']
+            links.append(new_link)
+            scraper = sc.Scraper(new_link)
+            ss.send_raw_data(scraper)
         if 'rel' in element.attrib and element.attrib['rel'] == 'next':
-            new_link=element.attrib['href']
+            prev_url = url
+            url=element.attrib['href']
 
-    if new_link:
+    if prev_url != url and counter < 1:
         counter = counter + 1
         print(counter)
-        searchEntries(new_link)
+        print(f"There are {len(links)} links")
     else:
+        url = None
         print('Search Finished')
 
 
-url = "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3.atom"
-searchEntries(url)
 print(len(links))
