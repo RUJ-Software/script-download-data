@@ -12,4 +12,5 @@ class Scraper(object):
     return self.raw_data
 
   def getData(self):
+    pass
     

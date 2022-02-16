@@ -4,17 +4,16 @@ import aiohttp
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 
-class AsyncLicitacionDownloader(object):
 
+class AsyncLicitacionDownloader(object):
     def __init__(self, observable, schedule, url):
         self._url = url
         self._observable = observable
         self._schedule = schedule
 
     async def async_download(self):
-        counter = 0
-
-        while url != None:
+        print(self._url)
+        while self._url is not None:
             tasks = []
             try:
                 content = requests.get(self._url)
@@ -28,17 +27,20 @@ class AsyncLicitacionDownloader(object):
                     if element.tag == entry_tag:
                         new_link = element.find('{http://www.w3.org/2005/Atom}link').attrib['href']
                         print(new_link)
+                        # Insertamos la task de los datos a descargar
+                        tasks.append(asyncio.create_task(self.__download_data__(new_link)))
                     if 'rel' in element.attrib and element.attrib['rel'] == 'next':
-                        prev_url = url
-                        url=element.attrib['href']
-
-                if prev_url != url and counter < 1:
+                        prev_url = self._url
+                        url = element.attrib['href']
+                # Lanzar la descarga de todos los datos de esta pagina
+                await asyncio.gather(*tasks)
+                if prev_url is not url and counter < 1:
                     counter = counter + 1
                     print(counter)
-                    print(f"There are {len(links)} links")
                 else:
                     url = None
                     print('Search Finished')
+
             except Exception as e:
                 print(e)
                 print(e.__traceback__)
@@ -57,6 +59,4 @@ class AsyncLicitacionDownloader(object):
 
         print("Descargando...")
         r = requests.get(url)
-        
         print(self._raw_data)
-        return self.raw_data
