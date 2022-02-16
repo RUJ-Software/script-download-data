@@ -11,7 +11,6 @@ prev_url = ""
 
 ss = SparkStreaming()
 
-
 while url != None:
     url_response = urlopen(url) # return a http.response object
     counter
