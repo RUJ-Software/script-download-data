@@ -54,6 +54,6 @@ if __name__ == "__main__":
         elif args[1] == 'test':
             asyncio.run(test())
     else:
-        print('Es necesario ejecutar el scrpipt con ')
+        print('Es necesario ejecutar el scrpipt con el parámetro server|client|test')
 
 
