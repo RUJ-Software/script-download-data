@@ -1,5 +1,5 @@
 import asyncio
-import requests
+from urllib.request import urlopen
 import aiohttp
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
@@ -12,11 +12,10 @@ class AsyncLicitacionDownloader(object):
         self._schedule = schedule
 
     async def async_download(self):
-        print(self._url)
         while self._url is not None:
             tasks = []
             try:
-                content = requests.get(self._url)
+                content = urlopen(self._url)
 
                 tree = ET.parse(content)
                 root = tree.getroot()
@@ -49,14 +48,10 @@ class AsyncLicitacionDownloader(object):
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(url) as response:
-                    soup = BeautifulSoup(await response.text, 'lxml')
-                    raw_data = soup.select('form.form')
+                    soup = BeautifulSoup(await response.text('utf-8'), "html.parser")
+                    raw_data = soup.find_all('form')[1]
                     self._observable.on_next({
                         'raw_data': raw_data
                     })
             except Exception as e:
                 print(e)
-
-        print("Descargando...")
-        r = requests.get(url)
-        print(self._raw_data)

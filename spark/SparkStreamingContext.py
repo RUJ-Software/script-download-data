@@ -6,7 +6,7 @@ from pyspark.streaming import StreamingContext
 LOG_LEVEL = "ERROR"
 BATCH_DURATION = 3
 IP = "localhost"
-PORT = 10001
+PORT = 10002
 
 
 class SparkStreamingContext:
@@ -28,6 +28,8 @@ class SparkStreamingContext:
 
         #lines.filter(lambda tweet: tweet != "").map(lambda tweet: sentimentAnalyser(tweet)).foreachRDD(
         #    lambda tweet: saveToDB(tweet))
+
+        lines.foreachRDD(lambda licitation: print(licitation))
 
         ssc.start()  # Start the computation
         ssc.awaitTermination()  # Wait for the computation to terminate

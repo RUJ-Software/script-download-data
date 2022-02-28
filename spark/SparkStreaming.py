@@ -5,13 +5,13 @@ import sys
 from pyspark.sql.session import SparkSession
 
 TCP_IP = "localhost"
-TCP_PORT = 10001
+TCP_PORT = 10002
 
 
 class SparkStreaming(object):
     def __init__(self):
         findspark.init()
-        sc = pyspark.SparkContext(appName="CALLER_01")
+        sc = pyspark.SparkContext(appName="CALLER_02")
         self._spark = SparkSession(sc)
 
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,7 +25,7 @@ class SparkStreaming(object):
         try:
             print("------------------------------------------")
             print("Data: " + raw_data)
-            print(self._conn.send(raw_data.encode('utf-8')))
+            print(self._conn.send(raw_data))
         except:
             e = sys.exc_info()[0]
             print("Error: %s" % e)
