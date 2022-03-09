@@ -49,7 +49,7 @@ class AsyncLicitacionDownloader(object):
             try:
                 async with session.get(url) as response:
                     soup = BeautifulSoup(await response.text('utf-8'), "html.parser")
-                    raw_data = soup.find_all('form')[1]
+                    raw_data = str(soup.find_all('form', class_='form')[1])
                     self._observable.on_next({
                         'raw_data': raw_data
                     })

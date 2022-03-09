@@ -1,11 +1,12 @@
 import findspark
 import pyspark
 import socket
+import traceback
 import sys
 from pyspark.sql.session import SparkSession
 
 TCP_IP = "localhost"
-TCP_PORT = 10002
+TCP_PORT = 10001
 
 
 class SparkStreaming(object):
@@ -24,8 +25,11 @@ class SparkStreaming(object):
     def send_raw_data(self, raw_data):
         try:
             print("------------------------------------------")
-            print("Data: " + raw_data)
-            print(self._conn.send(raw_data))
+            print(type(raw_data))
+            data = raw_data.encode('utf-8')
+            print(self._conn.send(data))
+            print('Licitacion enviada!')
         except:
             e = sys.exc_info()[0]
             print("Error: %s" % e)
+            print(traceback.format_exc())

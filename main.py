@@ -30,7 +30,7 @@ async def main():
     s = ss.SparkStreaming()
     observable = create(img_downloader_observable)
     #observable.subscribe(lambda x: print(x['raw_data']))
-    observable.subscribe(lambda x: s.send_raw_data(x))
+    observable.subscribe(lambda x: s.send_raw_data(x['raw_data']))
 
 
 async def test():
@@ -40,7 +40,7 @@ async def test():
         async with session.get(
                 'https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&idEvl=5HKn3DhBJRV7h85%2Fpmmsfw%3D%3D') as response:
             soup = BeautifulSoup(await response.text('utf-8'), "html.parser")
-            raw_data = soup.find_all('form')[1]
+            raw_data = str(soup.find_all('form')[1])
             print(raw_data)
 
 if __name__ == "__main__":
