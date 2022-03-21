@@ -1,4 +1,13 @@
 from bs4 import BeautifulSoup
+from datetime import datetime
+
+
+def to_float(num_str):
+    try:
+        num = float(num_str)
+    except ValueError as ve:
+        num = 0.0
+    return num
 
 
 class HtmlToDict:
@@ -8,9 +17,16 @@ class HtmlToDict:
         soup = BeautifulSoup(str(form), "html.parser")
         elements = soup.find_all('ul')
 
-        dict_data = {'org_contratacion': '', 'estado': '', 'objeto': '', 'presupuesto_sin_impuestos': '',
-                       'valor_estimado': '', 'tipo_contrato': '', 'cpv': '', 'lugar': '', 'procedimiento': '',
-                       'info': {}}
+        try:
+            div_link = soup.find('div', class_='estiloOculto')
+            link_contratacion = div_link.find('a')['href']
+        except:
+            link_contratacion = ''
+
+        dict_data = {'link_contratacion': link_contratacion, 'org_contratacion': '', 'estado': '', 'objeto': '',
+                       'presupuesto_sin_impuestos': '', 'valor_estimado': '', 'tipo_contrato': '', 'cpv': '',
+                       'lugar': '', 'procedimiento': '',
+                       'info': {}, 'fecha': datetime.now()}
 
         for element in elements:
             if element.get('class') and (
@@ -22,10 +38,10 @@ class HtmlToDict:
                 elif element.get('id') == 'fila4':
                     dict_data['objeto'] = element.find('span', class_="outputText").text
                 elif element.get('id') == 'fila5':
-                    dict_data['presupuesto_sin_impuestos'] = float(
+                    dict_data['presupuesto_sin_impuestos'] = to_float(
                         element.find('span', class_="outputText").text.replace('.', '').replace(',', '.'))
                 elif element.get('id') == 'fila6':
-                    dict_data['valor_estimado'] = float(
+                    dict_data['valor_estimado'] = to_float(
                         element.find('span', class_="outputText").text.replace('.', '').replace(',', '.'))
                 elif element.get('id') == 'fila7':
                     dict_data['tipo_contrato'] = element.find('span', class_="outputText").text
@@ -48,7 +64,7 @@ class HtmlToDict:
                         dict_data['info']['num_licitadores'] = element.find('span', class_="outputText").text
                     elif element.find('span', class_="tipo3").text == 'Importe de Adjudicación':
                         try:
-                            dict_data['info']['importe_adjudicacion'] = float(
+                            dict_data['info']['importe_adjudicacion'] = to_float(
                                 element.find('span', class_="outputText").text.replace('.', '').replace(',', '.'))
                         except:
                             dict_data['info']['importe_adjudicacion'] = element.find('span', class_="outputText").text
@@ -57,5 +73,5 @@ class HtmlToDict:
                     elif element.find('span', class_="tipo3").text == 'Fecha fin de presentación de solicitud':
                         dict_data['info']['fecha_presentacion_solicitud'] = element.find('span',
                                                                                            class_="outputText").text
-                        
+
         return dict_data

@@ -12,9 +12,11 @@ class AsyncLicitacionDownloader(object):
         self._schedule = schedule
 
     async def async_download(self):
+        counter = 0
         while self._url is not None:
             tasks = []
             try:
+                prev_url = self._url
                 content = urlopen(self._url)
 
                 tree = ET.parse(content)
@@ -25,21 +27,16 @@ class AsyncLicitacionDownloader(object):
                 for element in root:
                     if element.tag == entry_tag:
                         new_link = element.find('{http://www.w3.org/2005/Atom}link').attrib['href']
-                        print(new_link)
                         # Insertamos la task de los datos a descargar
                         tasks.append(asyncio.create_task(self.__download_data__(new_link)))
+                        counter += 1
                     if 'rel' in element.attrib and element.attrib['rel'] == 'next':
-                        prev_url = self._url
-                        url = element.attrib['href']
+                        self._url = element.attrib['href']
                 # Lanzar la descarga de todos los datos de esta pagina
                 await asyncio.gather(*tasks)
-                if prev_url is not url and counter < 1:
-                    counter = counter + 1
-                    print(counter)
-                else:
-                    url = None
-                    print('Search Finished')
-
+                if prev_url is self._url:
+                    self._url = None
+                    print(f'Search Finished. Total licitations: {counter}')
             except Exception as e:
                 print(e)
                 print(e.__traceback__)

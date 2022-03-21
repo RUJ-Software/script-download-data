@@ -1,5 +1,7 @@
+from dotenv import load_dotenv
 from rx import create
 import sys
+import os
 from downloader import AsyncLicitacionDownloader as ald
 import asyncio
 import threading
@@ -37,8 +39,7 @@ async def test():
     import aiohttp
     from bs4 import BeautifulSoup
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-                'https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&idEvl=5HKn3DhBJRV7h85%2Fpmmsfw%3D%3D') as response:
+        async with session.get(os.getenv('LICITATION_ATOM_URL')) as response:
             soup = BeautifulSoup(await response.text('utf-8'), "html.parser")
             raw_data = str(soup.find_all('form')[1])
             print(raw_data)
@@ -47,6 +48,7 @@ if __name__ == "__main__":
     args = sys.argv
 
     if len(args) == 2:
+        load_dotenv()
         if args[1] == 'server':
             spark_streaming = ssc.SparkStreamingContext()
         elif args[1] == 'client':

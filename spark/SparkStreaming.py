@@ -3,10 +3,9 @@ import pyspark
 import socket
 import traceback
 import sys
+import os
 from pyspark.sql.session import SparkSession
 
-TCP_IP = "localhost"
-TCP_PORT = 10001
 WINDOWS_LINE_ENDING = '\r\n'
 UNIX_LINE_ENDING = '\n'
 
@@ -19,7 +18,7 @@ class SparkStreaming(object):
         self._spark = SparkSession(sc)
 
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._s.bind((TCP_IP, TCP_PORT))
+        self._s.bind((os.getenv('SPARK_STREAMING_CLIENT_IP'), int(os.getenv('SPARK_STREAMING_CLIENT_PORT'))))
         self._s.listen(1)
 
         print("Waiting for TCP connection...")

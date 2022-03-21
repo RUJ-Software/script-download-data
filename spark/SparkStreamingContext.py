@@ -1,14 +1,19 @@
 import findspark
+import os
 from pyspark.sql.session import SparkSession
 from pyspark.streaming import StreamingContext
 from pyspark.sql import Row
 from model import Formatter as formatter
+from indexer import OpenSearchClient as opc
 
-
-LOG_LEVEL = "ERROR"
-BATCH_DURATION = 3
-IP = "localhost"
-PORT = 10001
+COLUMNS_TO_INDEX = [
+    "lugar",
+    "org_contratacion",
+    "valor_estimado",
+    "tipo_contrato",
+    "estado",
+    "procedimiento"
+]
 
 
 def transform_form(raw_licitation):
@@ -26,12 +31,6 @@ def test(rdd):
         print(a)
 
 
-def save_to_mongo(rdd):
-    if not rdd.isEmpty():
-        df = rdd.map(lambda x: Row(**transform_form(x))).toDF()
-        df.write.format("mongo").mode('append').option("database", "licitations").option("collection", "licitation").save()
-
-
 class SparkStreamingContext:
     def __init__(self):
         findspark.init()
@@ -42,17 +41,27 @@ class SparkStreamingContext:
         sc = spark.sparkContext
 
         # Create a local StreamingContext with two working thread and batch interval of 1 second
-        sc.setLogLevel(LOG_LEVEL)
+        sc.setLogLevel(os.getenv('SPARK_STREAMING_SERVER_LOG_LEVEL'))
         # ssc = StreamingContext(sc, 1)
-        ssc = StreamingContext(sc, batchDuration=BATCH_DURATION)
+        ssc = StreamingContext(sc, batchDuration=int(os.getenv('SPARK_STREAMING_SERVER_BATCH_DURATION')))
 
         # We need to create the checkpoint
         ssc.checkpoint("checkpoint")
 
         # Create a DStream that will connect to hostname:port, like localhost:9999
-        lines = ssc.socketTextStream(IP, PORT)
+        lines = ssc.socketTextStream(os.getenv('SPARK_STREAMING_SERVER_IP'), int(os.getenv('SPARK_STREAMING_SERVER_PORT')))
+
+        # index_client = sc.broadcast(opc.OpenSearchClient(os.getenv('OPENSEARCH_IP'), os.getenv('OPENSEARCH_PORT'),
+        #                                    os.getenv('OPENSEARCH_USER'), os.getenv('OPENSEARCH_PASS')))
 
         lines.filter(lambda licitation: licitation != "").foreachRDD(lambda rdd: save_to_mongo(rdd))
 
         ssc.start()  # Start the computation
         ssc.awaitTermination()  # Wait for the computation to terminate
+
+
+def save_to_mongo(rdd):
+    if not rdd.isEmpty():
+        rdd = rdd.map(lambda x: Row(**transform_form(x)))
+        rdd.toDF().write.format("mongo").mode('append').option("database", "licitations").option("collection", "licitation").save()
+        # rdd.map(lambda x: index_client.ingest({i: x[i] for i in COLUMNS_TO_INDEX}))
