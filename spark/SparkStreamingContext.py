@@ -1,9 +1,8 @@
 import findspark
-import pyspark
 from pyspark.sql.session import SparkSession
 from pyspark.streaming import StreamingContext
+from pyspark.sql import Row
 from model import Formatter as formatter
-from db import MongoDB
 
 
 LOG_LEVEL = "ERROR"
@@ -21,17 +20,26 @@ def transform_form(raw_licitation):
 def test(rdd):
     if not rdd.isEmpty():
         a = rdd.take(1)
+        with open('server_data.txt', 'w') as f:
+            f.write(a[0])
+            f.close()
         print(a)
+
+
+def save_to_mongo(rdd):
+    if not rdd.isEmpty():
+        df = rdd.map(lambda x: Row(**transform_form(x))).toDF()
+        df.write.format("mongo").mode('append').option("database", "licitations").option("collection", "licitation").save()
+
 
 class SparkStreamingContext:
     def __init__(self):
         findspark.init()
-        spark = SparkSession.builder.appName('SERVER_01')\
-            .config('spark.mongodb.input.uri', 'mongodb://admin:InsoData2022-@localhost:27017/licitations.licitation')\
-            .config('spark.mongodb.output.uri', 'mongodb://admin:InsoData2022-@localhost:27017/licitations.licitation')\
+        spark = SparkSession.builder.appName('spark')\
+            .config('spark.mongodb.input.uri', 'mongodb://admin:InsoData2022-@127.0.0.1:27017')\
+            .config('spark.mongodb.output.uri', 'mongodb://admin:InsoData2022-@127.0.0.1:27017')\
             .getOrCreate()
         sc = spark.sparkContext
-
 
         # Create a local StreamingContext with two working thread and batch interval of 1 second
         sc.setLogLevel(LOG_LEVEL)
@@ -44,17 +52,7 @@ class SparkStreamingContext:
         # Create a DStream that will connect to hostname:port, like localhost:9999
         lines = ssc.socketTextStream(IP, PORT)
 
-        #lines.filter(lambda licitation: licitation != "").map(lambda raw_licitation: transform_form(raw_licitation))\
-        #    .foreachRDD(lambda rdd: self.__save_to_mongo__(rdd))
-        lines.foreachRDD(lambda rdd: test(rdd))
+        lines.filter(lambda licitation: licitation != "").foreachRDD(lambda rdd: save_to_mongo(rdd))
 
         ssc.start()  # Start the computation
         ssc.awaitTermination()  # Wait for the computation to terminate
-
-    def __save_to_mongo__(self, rdd):
-        # licitations = rdd.map(lambda licitation: licitation)
-        if not rdd.isEmpty():
-            df = rdd.toDF()
-            print(df)
-            df.write.format("mongo")
-

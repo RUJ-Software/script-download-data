@@ -7,12 +7,15 @@ from pyspark.sql.session import SparkSession
 
 TCP_IP = "localhost"
 TCP_PORT = 10001
+WINDOWS_LINE_ENDING = '\r\n'
+UNIX_LINE_ENDING = '\n'
 
 
 class SparkStreaming(object):
     def __init__(self):
         findspark.init()
-        sc = pyspark.SparkContext(appName="CALLER_02")
+        conf = pyspark.SparkConf().set("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
+        sc = pyspark.SparkContext(appName="spark", conf=conf)
         self._spark = SparkSession(sc)
 
         self._s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -25,9 +28,9 @@ class SparkStreaming(object):
     def send_raw_data(self, raw_data):
         try:
             print("------------------------------------------")
-            print(type(raw_data))
-            data = raw_data.encode('utf-8')
-            print(self._conn.send(data))
+            formatted_data = raw_data.replace(WINDOWS_LINE_ENDING, ' ').replace(UNIX_LINE_ENDING, ' ')
+            formatted_data += '\n'
+            print(self._conn.send(formatted_data.encode("utf-8")))
             print('Licitacion enviada!')
         except:
             e = sys.exc_info()[0]

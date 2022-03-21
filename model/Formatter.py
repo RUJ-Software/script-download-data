@@ -59,4 +59,3 @@ class HtmlToDict:
                                                                                            class_="outputText").text
                         
         return dict_data
-    
