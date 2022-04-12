@@ -54,7 +54,7 @@ if __name__ == "__main__":
             spark_streaming = ssc.SparkStreamingContext()
         elif args[1] == 'client':
             asyncio.run(main())
-        elif args[1] == 'index':
+        elif args[1] == 'full-index':
             index = osi.OpenSearchIndexer()
             index.full_index()
         elif args[1] == 'test':

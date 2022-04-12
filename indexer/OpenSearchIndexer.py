@@ -29,6 +29,7 @@ class OpenSearchIndexer(object):
         print('[INFO] Creando el índice en OpenSearch...')
         self._client.create_index_structure()
         self.__index_all_licitations__()
+        print('[INFO] Indexación finalizada')
 
     def clean_index(self):
         print('[INFO] Limpiando indexación actual...')
