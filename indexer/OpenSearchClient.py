@@ -23,6 +23,7 @@ class OpenSearchClient(object):
             ssl_show_warn=False
         )
 
+    def create_index_structure(self):
         index_body = {
             'settings': {
                 'index': {
@@ -53,10 +54,18 @@ class OpenSearchClient(object):
             }
         }
 
-        if self._client.indices.exists(self._index_name):
+        if not self._client.indices.exists(self._index_name):
             response = self._client.indices.create(self._index_name, body=index_body)
             print('\nCreating index:')
             print(response)
+        else:
+            print('[WARN] El índice ya existe. Se omite la creación')
+
+    def clean_index(self):
+        if self._client.indices.exists(self._index_name):
+            print(self._client.indices.delete(self._index_name))
+        else:
+            print('[WARN] El índice no existe. Se omite la eliminación')
 
     def ingest(self, json_to_ingest):
         response = self._client.index(
@@ -64,7 +73,7 @@ class OpenSearchClient(object):
             body=json_to_ingest,
             refresh=True
         )
-        if '_id' in response:
-            print(f'[INFO] Added document with ID={response["_id"]}')
-        else:
+        if '_id' not in response:
             print(f'[ERROR] Not inserted in OpenSearch. Data={json_to_ingest}\nResponse={response}')
+
+        return '_id' in response

@@ -35,8 +35,10 @@ class SparkStreamingContext:
     def __init__(self):
         findspark.init()
         spark = SparkSession.builder.appName('spark')\
-            .config('spark.mongodb.input.uri', 'mongodb://admin:InsoData2022-@127.0.0.1:27017')\
-            .config('spark.mongodb.output.uri', 'mongodb://admin:InsoData2022-@127.0.0.1:27017')\
+            .config('spark.mongodb.input.uri', f'mongodb://{os.getenv("MONGODB_USER")}:{os.getenv("MONGODB_PASS")}@'
+                                               f'{os.getenv("MONGODB_IP")}:{os.getenv("MONGODB_PORT")}') \
+            .config('spark.mongodb.output.uri', f'mongodb://{os.getenv("MONGODB_USER")}:{os.getenv("MONGODB_PASS")}@'
+                                                f'{os.getenv("MONGODB_IP")}:{os.getenv("MONGODB_PORT")}')\
             .getOrCreate()
         sc = spark.sparkContext
 
@@ -62,6 +64,11 @@ class SparkStreamingContext:
 
 def save_to_mongo(rdd):
     if not rdd.isEmpty():
-        rdd = rdd.map(lambda x: Row(**transform_form(x)))
-        rdd.toDF().write.format("mongo").mode('append').option("database", "licitations").option("collection", "licitation").save()
+        try:
+            print('DONE OK')
+            rdd = rdd.map(lambda x: Row(**transform_form(x))).filter(lambda licitation: licitation['estado'] == 'Resuelta')
+            rdd.toDF().write.format("mongo").mode('append').option("database", "licitations").option("collection", "licitation").save()
+        except Exception as ex:
+            print(ex)
+            print(ex.__traceback__)
         # rdd.map(lambda x: index_client.ingest({i: x[i] for i in COLUMNS_TO_INDEX}))

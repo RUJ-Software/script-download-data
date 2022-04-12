@@ -18,6 +18,10 @@ class AsyncLicitacionDownloader(object):
             try:
                 prev_url = self._url
                 content = urlopen(self._url)
+                print('Retriving information from', self._url)
+                with open('url_log.txt', 'a') as f:
+                    f.write(f'{self._url}\n')
+                    f.close()
 
                 tree = ET.parse(content)
                 root = tree.getroot()

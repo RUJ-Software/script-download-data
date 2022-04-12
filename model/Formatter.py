@@ -10,6 +10,17 @@ def to_float(num_str):
     return num
 
 
+def to_date(date_str):
+    try:
+        tmp = date_str.split(' ')
+        date = tmp[0].split('/')
+        time = tmp[1].split(':')
+        formatted_date = datetime(int(date[2]), int(date[1]), int(date[0]), int(time[0]), int(time[1]))
+    except Exception as ex:
+        formatted_date = datetime.now()
+    return formatted_date.strftime('%d/%m/%y %H:%M:%S')
+
+
 class HtmlToDict:
 
     @staticmethod
@@ -54,8 +65,8 @@ class HtmlToDict:
                 # Info
                 if element.find('span', class_="tipo3"):
                     if element.find('span', class_="tipo3").text == 'Fecha fin de presentación de oferta':
-                        dict_data['info']['fecha_fin_presentacion_oferta'] = element.find('span',
-                                                                                            class_="outputText").text
+                        dict_data['info']['fecha_fin_presentacion_oferta'] = to_date(element.find('span',
+                                                                                            class_="outputText").text)
                     elif element.find('span', class_="tipo3").text == 'Resultado':
                         dict_data['info']['resultado'] = element.find('span', class_="outputText").text
                     elif element.find('span', class_="tipo3").text == 'Adjudicatario':
@@ -67,11 +78,11 @@ class HtmlToDict:
                             dict_data['info']['importe_adjudicacion'] = to_float(
                                 element.find('span', class_="outputText").text.replace('.', '').replace(',', '.'))
                         except:
-                            dict_data['info']['importe_adjudicacion'] = element.find('span', class_="outputText").text
+                            dict_data['info']['importe_adjudicacion'] = to_float(element.find('span', class_="outputText").text)
                     elif element.find('span', class_="tipo3").text == 'Fecha de Actualización del Expte.':
-                        dict_data['info']['fecha_act_expediente'] = element.find('span', class_="outputText").text
+                        dict_data['info']['fecha_act_expediente'] = to_date(element.find('span', class_="outputText").text)
                     elif element.find('span', class_="tipo3").text == 'Fecha fin de presentación de solicitud':
-                        dict_data['info']['fecha_presentacion_solicitud'] = element.find('span',
-                                                                                           class_="outputText").text
+                        dict_data['info']['fecha_presentacion_solicitud'] = to_date(element.find('span',
+                                                                                           class_="outputText").text)
 
         return dict_data
