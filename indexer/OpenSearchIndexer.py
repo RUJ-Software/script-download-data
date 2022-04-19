@@ -1,20 +1,16 @@
 import os
 
 from indexer import OpenSearchClient as client
-from pymongo import MongoClient
-from pymongo import DESCENDING
-
-
-def mongo_connection():
-    mongo_client = MongoClient(f'mongodb://{os.getenv("MONGODB_USER")}:{os.getenv("MONGODB_PASS")}@{os.getenv("MONGODB_IP")}'
-                         f':{os.getenv("MONGODB_PORT")}/')
-    db = mongo_client.licitations
-    return db
+from db import MongoDb as mongo
 
 
 def extract_index_data(licitation):
-    return {key: licitation[key] for key in licitation.keys() & {'lugar', 'org_contratacion', 'valor_estimado',
-                                                                 'tipo_contrato', 'estado', 'procedimiento'}}
+    data = {key: licitation[key] for key in licitation.keys() & {'_id', 'objeto', 'lugar', 'org_contratacion',
+                                                                 'valor_estimado', 'tipo_contrato', 'estado',
+                                                                 'procedimiento'}}
+    data['mongo_id'] = str(data['_id'])
+    del data['_id']
+    return data
 
 
 class OpenSearchIndexer(object):
@@ -37,9 +33,9 @@ class OpenSearchIndexer(object):
         print('[INFO] Limpieza finalizada')
 
     def __index_all_licitations__(self):
-        db = mongo_connection()
+        mongo_client = mongo.MongoDb()
         index_num = 0
-        for licitation in db.licitation.find().sort("$natural", DESCENDING):
+        for licitation in mongo_client.find_all_licitations():
             data_to_index = extract_index_data(licitation)
             if self._client.ingest(data_to_index):
                 index_num += 1

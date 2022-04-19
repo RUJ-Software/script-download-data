@@ -32,6 +32,12 @@ class OpenSearchClient(object):
             },
             "mappings": {
                 "properties": {
+                    "mongo_id": {
+                        "type": "text"
+                    },
+                    "objeto": {
+                        "type": "text"
+                    },
                     "lugar": {
                         "type": "text"
                     },
