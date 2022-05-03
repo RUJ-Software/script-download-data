@@ -1,10 +1,13 @@
+from dotenv import load_dotenv
 from rx import create
 import sys
+import os
 from downloader import AsyncLicitacionDownloader as ald
 import asyncio
 import threading
 from spark import SparkStreaming as ss
 from spark import SparkStreamingContext as ssc
+from indexer import Indexer as indx
 
 URL = "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/" \
       "licitacionesPerfilesContratanteCompleto3.atom"
@@ -30,27 +33,36 @@ async def main():
     s = ss.SparkStreaming()
     observable = create(img_downloader_observable)
     #observable.subscribe(lambda x: print(x['raw_data']))
-    observable.subscribe(lambda x: s.send_raw_data(x))
+    observable.subscribe(lambda x: s.send_raw_data(x['raw_data']))
 
 
 async def test():
     import aiohttp
     from bs4 import BeautifulSoup
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-                'https://contrataciondelestado.es/wps/poc?uri=deeplink:detalle_licitacion&idEvl=5HKn3DhBJRV7h85%2Fpmmsfw%3D%3D') as response:
+        async with session.get(os.getenv('LICITATION_ATOM_URL')) as response:
             soup = BeautifulSoup(await response.text('utf-8'), "html.parser")
-            raw_data = soup.find_all('form')[1]
+            raw_data = str(soup.find_all('form')[1])
             print(raw_data)
 
 if __name__ == "__main__":
     args = sys.argv
 
     if len(args) == 2:
+        load_dotenv()
         if args[1] == 'server':
             spark_streaming = ssc.SparkStreamingContext()
         elif args[1] == 'client':
             asyncio.run(main())
+        elif args[1] == 'full-index':
+            index = indx.Indexer()
+            index.full_index()
+        elif args[1] == 'update-index':
+            index = indx.Indexer()
+            index.update_index()
+        elif args[1] == 'clean-index':
+            index = indx.Indexer()
+            index.clean_index()
         elif args[1] == 'test':
             asyncio.run(test())
     else:
