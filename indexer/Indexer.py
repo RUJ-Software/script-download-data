@@ -1,6 +1,6 @@
 import os
 
-from indexer import OpenSearchClient as client
+from indexer import ElasticClient as client
 from db import MongoDb as mongo
 
 
@@ -13,18 +13,22 @@ def extract_index_data(licitation):
     return data
 
 
-class OpenSearchIndexer(object):
+class Indexer(object):
 
     def __init__(self):
-        self._client = client.OpenSearchClient(os.getenv('OPENSEARCH_IP'), os.getenv('OPENSEARCH_PORT'),
-                                               os.getenv('OPENSEARCH_USER'), os.getenv('OPENSEARCH_PASS'))
+        self._client = client.ElasticClient()
 
     def full_index(self):
         print('[INFO] Ejecutando indexación completa')
         self.clean_index()
         print('[INFO] Creando el índice en OpenSearch...')
         self._client.create_index_structure()
-        self.__index_all_licitations__()
+        self.__index_licitations__(True)
+        print('[INFO] Indexación finalizada')
+
+    def update_index(self):
+        print('[INFO] Ejecutando indexación de nuevos registros')
+        self.__index_licitations__(False)
         print('[INFO] Indexación finalizada')
 
     def clean_index(self):
@@ -32,10 +36,15 @@ class OpenSearchIndexer(object):
         self._client.clean_index()
         print('[INFO] Limpieza finalizada')
 
-    def __index_all_licitations__(self):
+    def __index_licitations__(self, full_index):
         mongo_client = mongo.MongoDb()
         index_num = 0
-        for licitation in mongo_client.find_all_licitations():
+        if full_index:
+            cursor = mongo_client.find_all_licitations()
+        else:
+            cursor = mongo_client.find_all_new_licitations()
+
+        for licitation in cursor:
             data_to_index = extract_index_data(licitation)
             if self._client.ingest(data_to_index):
                 index_num += 1
@@ -45,4 +54,6 @@ class OpenSearchIndexer(object):
             if (index_num % 100) == 0:
                 print(f'[INFO] Indexadas {index_num} licitaciones')
 
+        print('[INFO] Refrescando indices...')
+        self._client.refresh()
         print(f'[INFO] Total de licitaciones indexadas {index_num}')

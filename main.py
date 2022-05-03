@@ -7,7 +7,7 @@ import asyncio
 import threading
 from spark import SparkStreaming as ss
 from spark import SparkStreamingContext as ssc
-from indexer import OpenSearchIndexer as osi
+from indexer import Indexer as indx
 
 URL = "https://contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/" \
       "licitacionesPerfilesContratanteCompleto3.atom"
@@ -55,8 +55,14 @@ if __name__ == "__main__":
         elif args[1] == 'client':
             asyncio.run(main())
         elif args[1] == 'full-index':
-            index = osi.OpenSearchIndexer()
+            index = indx.Indexer()
             index.full_index()
+        elif args[1] == 'update-index':
+            index = indx.Indexer()
+            index.update_index()
+        elif args[1] == 'clean-index':
+            index = indx.Indexer()
+            index.clean_index()
         elif args[1] == 'test':
             asyncio.run(test())
     else:

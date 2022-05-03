@@ -3,6 +3,9 @@ from urllib.request import urlopen
 import aiohttp
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
+from datetime import datetime
+
+from db import MongoDb as mongo
 
 
 class AsyncLicitacionDownloader(object):
@@ -10,19 +13,23 @@ class AsyncLicitacionDownloader(object):
         self._url = url
         self._observable = observable
         self._schedule = schedule
+        self._execution_time = datetime.now()
+        self._mongo = mongo.MongoDb()
+        self._last_url = self._mongo.find_last_url()
 
     async def async_download(self):
         counter = 0
+        prev_url = self._url
         while self._url is not None:
             tasks = []
             try:
-                prev_url = self._url
                 content = urlopen(self._url)
                 print('Retriving information from', self._url)
-                with open('url_log.txt', 'a') as f:
-                    f.write(f'{self._url}\n')
-                    f.close()
 
+                if prev_url not in self._url:
+                    self._mongo.insert_url(self._execution_time, self._url)
+
+                prev_url = self._url
                 tree = ET.parse(content)
                 root = tree.getroot()
 
@@ -38,8 +45,11 @@ class AsyncLicitacionDownloader(object):
                         self._url = element.attrib['href']
                 # Lanzar la descarga de todos los datos de esta pagina
                 await asyncio.gather(*tasks)
-                if prev_url is self._url:
+                if self._url == 'https://contrataciondelestado.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3_20220405_150023.atom':
+                    print('AQUI')
+                if prev_url is self._url or (self._last_url is not None and self._last_url is self._url):
                     self._url = None
+                    self._mongo.close()
                     print(f'Search Finished. Total licitations: {counter}')
             except Exception as e:
                 print(e)

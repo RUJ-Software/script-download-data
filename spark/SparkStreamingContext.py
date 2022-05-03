@@ -4,16 +4,6 @@ from pyspark.sql.session import SparkSession
 from pyspark.streaming import StreamingContext
 from pyspark.sql import Row
 from model import Formatter as formatter
-from indexer import OpenSearchClient as opc
-
-COLUMNS_TO_INDEX = [
-    "lugar",
-    "org_contratacion",
-    "valor_estimado",
-    "tipo_contrato",
-    "estado",
-    "procedimiento"
-]
 
 
 def transform_form(raw_licitation):
@@ -71,4 +61,3 @@ def save_to_mongo(rdd):
         except Exception as ex:
             print(ex)
             print(ex.__traceback__)
-        # rdd.map(lambda x: index_client.ingest({i: x[i] for i in COLUMNS_TO_INDEX}))
