@@ -1,5 +1,5 @@
 # Script to download data
-We have created this script to automatically download all the data with which we are going to work in the Transparency project
+We have created this script to automatically download all the data with which we are going to work in the Transparency project. This script uses a spark streamin implementation and works with ReactiveX, MongoDB and Elastic Search. You can do multiple tasks that are explained later.
 
 ## Execution  tasks
 
